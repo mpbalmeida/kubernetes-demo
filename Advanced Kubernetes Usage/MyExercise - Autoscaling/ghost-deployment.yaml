@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghost
+  labels:
+    app: ghost
+spec:
+  ports:
+    - port: 2368
+  selector:
+    app: ghost
+    tier: frontend
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ghost-pv-claim
+  labels:
+    app: wordpress
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost
+  labels:
+    app: ghost
+spec:
+  selector:
+    matchLabels:
+      app: ghost
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ghost
+        tier: frontend
+    spec:
+      containers:
+      - image: ghost:3.40
+        name: ghost
+        env:
+        - name: DATABASE_CLIENT
+          value: mysql
+        - name: DATABASE_CONNECTION_HOST
+          value: wordpress-mysql
+        - name: DATABASE_CONNECTION_USER
+          value: root
+        - name: DATABASE_CONNECTION_DATABASE
+          value: ghost
+        - name: DATABASE_CONNECTION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 2368
+          name: ghost
+        volumeMounts:
+        - name: ghost-persistent-storage
+          mountPath: /var/lib/ghost/content
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "200m"
+      volumes:
+      - name: ghost-persistent-storage
+        persistentVolumeClaim:
+          claimName: ghost-pv-claim
+
