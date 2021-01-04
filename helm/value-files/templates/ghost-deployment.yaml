@@ -31,7 +31,7 @@ spec:
     requests:
       storage: {{ .Values.storage }}
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
@@ -45,7 +45,7 @@ spec:
     matchLabels:
       app: {{ .Release.Name }}
       release: {{ .Release.Name }}
-  replicas: {{ .Values[index].replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   template:
     metadata:
       labels:
@@ -54,7 +54,7 @@ spec:
     spec:
       containers:
       - name: {{ .Release.Name }}
-        image: {{ .Valuesmage.repo }}
+        image: {{ .Values.image.repo }}
         ports:
         - containerPort: {{ .Values.pod.port }}
         volumeMounts:
